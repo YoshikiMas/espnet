@@ -34,11 +34,13 @@ from espnet2.utils.sized_dict import SizedDict
 
 
 class AdapterForSoundScpReader(collections.abc.Mapping):
-    def __init__(self, loader, dtype=None):
+    def __init__(self, loader, dtype=None, fname=None):
         assert check_argument_types()
         self.loader = loader
         self.dtype = dtype
         self.rate = None
+        if fname:
+            self.data = read_2column_text(fname)
 
     def keys(self):
         return self.loader.keys()

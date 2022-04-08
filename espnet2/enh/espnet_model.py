@@ -11,6 +11,7 @@ from typeguard import check_argument_types
 
 from espnet2.enh.decoder.abs_decoder import AbsDecoder
 from espnet2.enh.encoder.abs_encoder import AbsEncoder
+from espnet2.enh.encoder.s3prl_encoder import S3PRLEncoder
 from espnet2.enh.loss.criterions.tf_domain import FrequencyDomainLoss
 from espnet2.enh.loss.criterions.time_domain import TimeDomainLoss
 from espnet2.enh.loss.wrappers.abs_wrapper import AbsLossWrapper

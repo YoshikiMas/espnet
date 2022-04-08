@@ -19,6 +19,7 @@ from espnet2.enh.encoder.abs_encoder import AbsEncoder
 from espnet2.enh.encoder.conv_encoder import ConvEncoder
 from espnet2.enh.encoder.null_encoder import NullEncoder
 from espnet2.enh.encoder.stft_encoder import STFTEncoder
+from espnet2.enh.encoder.s3prl_encoder import S3PRLEncoder
 from espnet2.enh.espnet_model import ESPnetEnhancementModel
 from espnet2.enh.loss.criterions.abs_loss import AbsEnhLoss
 from espnet2.enh.loss.criterions.tf_domain import FrequencyDomainL1
@@ -26,6 +27,8 @@ from espnet2.enh.loss.criterions.tf_domain import FrequencyDomainMSE
 from espnet2.enh.loss.criterions.time_domain import CISDRLoss
 from espnet2.enh.loss.criterions.time_domain import SISNRLoss
 from espnet2.enh.loss.criterions.time_domain import SNRLoss
+# from espnet2.enh.loss.criterions.time_domain import TH_SISNRLoss
+# from espnet2.enh.loss.criterions.time_domain import TH_SNRLoss
 from espnet2.enh.loss.criterions.time_domain import TimeDomainL1
 from espnet2.enh.loss.wrappers.abs_wrapper import AbsLossWrapper
 from espnet2.enh.loss.wrappers.fixed_order import FixedOrderSolver
@@ -33,6 +36,8 @@ from espnet2.enh.loss.wrappers.pit_solver import PITSolver
 from espnet2.enh.separator.abs_separator import AbsSeparator
 from espnet2.enh.separator.asteroid_models import AsteroidModel_Converter
 from espnet2.enh.separator.conformer_separator import ConformerSeparator
+from espnet2.enh.separator.conformer_regression_separator import ConformerRegressionSeparator
+from espnet2.enh.separator.dccrn_separator import DCCRNSeparator
 from espnet2.enh.separator.dprnn_separator import DPRNNSeparator
 from espnet2.enh.separator.neural_beamformer import NeuralBeamformer
 from espnet2.enh.separator.rnn_separator import RNNSeparator
@@ -51,7 +56,7 @@ from espnet2.utils.types import str_or_none
 
 encoder_choices = ClassChoices(
     name="encoder",
-    classes=dict(stft=STFTEncoder, conv=ConvEncoder, same=NullEncoder),
+    classes=dict(stft=STFTEncoder, conv=ConvEncoder, same=NullEncoder, s3prl=S3PRLEncoder),
     type_check=AbsEncoder,
     default="stft",
 )
@@ -62,8 +67,10 @@ separator_choices = ClassChoices(
         rnn=RNNSeparator,
         tcn=TCNSeparator,
         dprnn=DPRNNSeparator,
+        dccrn=DCCRNSeparator,
         transformer=TransformerSeparator,
         conformer=ConformerSeparator,
+        conformer_reg=ConformerRegressionSeparator,
         wpe_beamformer=NeuralBeamformer,
         asteroid=AsteroidModel_Converter,
         complex_tcn_dense_unet=CSeqUNetDenseSeg,
@@ -90,8 +97,10 @@ criterion_choices = ClassChoices(
     name="criterions",
     classes=dict(
         snr=SNRLoss,
+        # th_snr=TH_SNRLoss,
         ci_sdr=CISDRLoss,
         si_snr=SISNRLoss,
+        # th_si_snr=TH_SISNRLoss,
         mse=FrequencyDomainMSE,
         l1=FrequencyDomainL1,
         td_l1=TimeDomainL1,
@@ -231,10 +240,11 @@ class EnhancementTask(AbsTask):
         loss_wrappers = []
         for ctr in args.criterions:
             criterion = criterion_choices.get_class(ctr["name"])(**ctr["conf"])
-            loss_wrapper = loss_wrapper_choices.get_class(ctr["wrapper"])(
-                criterion=criterion, **ctr["wrapper_conf"]
-            )
-            loss_wrappers.append(loss_wrapper)
+            for ctr_wrp in ctr["wrapper"]:
+                loss_wrapper = loss_wrapper_choices.get_class(ctr_wrp["type"])(
+                    criterion=criterion, **ctr_wrp["wrapper_conf"]
+                )
+                loss_wrappers.append(loss_wrapper)
 
         # 1. Build model
         model = ESPnetEnhancementModel(
