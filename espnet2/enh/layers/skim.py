@@ -46,7 +46,9 @@ class MemLSTM(nn.Module):
             "c",
             "id",
         ], f"only support 'hc', 'h', 'c' and 'id', current type: {mem_type}"
-
+        """
+        Hidden stateとCell stateは別々のRNNで処理される
+        """
         if mem_type in ["hc", "h"]:
             self.h_net = SingleRNN(
                 "LSTM",
@@ -82,10 +84,18 @@ class MemLSTM(nn.Module):
             ret_val = hc
         else:
             h, c = hc
+            """
+            hやcはSegLSTMで扱われたときのままのシェイプなので変形が必要
+            """
             d, BS, H = h.shape
             B = BS // S
             h = h.transpose(1, 0).contiguous().view(B, S, d * H)  # B, S, dH
             c = c.transpose(1, 0).contiguous().view(B, S, d * H)  # B, S, dH
+            """
+            SegLSTMと異なりこっちはFCなし
+            hidden = LSTM(input)
+            output = input + Normalize(hidden)
+            """
             if self.mem_type == "hc":
                 h = h + self.h_norm(self.h_net(h))
                 c = c + self.c_norm(self.c_net(c))
@@ -96,10 +106,16 @@ class MemLSTM(nn.Module):
                 h = torch.zeros_like(h)
                 c = c + self.c_norm(self.c_net(c))
 
+            """
+            SegLSTMで扱いやすい形に変更
+            """
             h = h.view(B * S, d, H).transpose(1, 0).contiguous()
             c = c.view(B * S, d, H).transpose(1, 0).contiguous()
             ret_val = (h, c)
 
+        """
+        SKiMの元論文のサブセクション2.4に対応
+        """
         if not self.bidirectional:
             # for causal setup
             causal_ret_val = []
@@ -160,7 +176,10 @@ class SegLSTM(nn.Module):
             c = torch.zeros(d, B, self.hidden_size).to(input.device)
         else:
             h, c = hc
-
+        """
+        hidden = LSTM(input)
+        output = input + Normalize(FC(hidden))
+        """
         output, (h, c) = self.lstm(input, (h, c))
         output = self.dropout(output)
         output = self.proj(output.contiguous().view(-1, output.shape[2])).view(
@@ -256,7 +275,11 @@ class SkiM(nn.Module):
     def forward(self, input):
         # input shape: B, T (S*K), D
         B, T, D = input.shape
-
+        """
+        DPRNNの元論文では各セグメントは50%オーバーラップだが、
+        SKiMの元論文では0%オーバーラップ。
+        デフォルトではseg_overlap=False
+        """
         if self.seg_overlap:
             input, rest = split_feature(
                 input.transpose(1, 2), segment_size=self.segment_size
@@ -265,17 +288,31 @@ class SkiM(nn.Module):
         else:
             input, rest = self._padfeature(input=input)
             input = input.view(B, -1, self.segment_size, D)  # B, S, K, D
+            
+        """
+        B: バッチサイズ
+        S: セグメント数
+        K: セグメントサイズ
+        D: 特徴量数 (Encoderのチャネル数)
+        """
         B, S, K, D = input.shape
 
         assert K == self.segment_size
 
         output = input.view(B * S, K, D).contiguous()  # BS, K, D
         hc = None
+        """
+        seg_lstmとself.mem_lstmを交互に適用
+            seg_lstm -> mem_lstm -> ... -> seg_lstm -> mem_lstm -> seg_lstm
+        """
         for i in range(self.num_blocks):
             output, hc = self.seg_lstms[i](output, hc)  # BS, K, D
             if self.mem_type and i < self.num_blocks - 1:
                 hc = self.mem_lstms[i](hc, S)
 
+        """
+        単一の時系列へ戻してFC (カーネルサイズ1のConv1D)
+        """
         if self.seg_overlap:
             output = output.view(B, S, K, D).permute(0, 3, 2, 1)  # B, D, K, S
             output = merge_feature(output, rest)  # B, D, T
