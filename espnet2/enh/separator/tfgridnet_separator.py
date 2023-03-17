@@ -71,6 +71,7 @@ class TFGridNet(AbsSeparator):
         emb_hs=1,
         activation="prelu",
         eps=1.0e-5,
+        ref_channel=-1,
     ):
         super().__init__()
         assert is_torch_1_9_plus, (
@@ -82,6 +83,8 @@ class TFGridNet(AbsSeparator):
         self.n_imics = n_imics
         assert n_fft % 2 == 0
         n_freqs = n_fft // 2 + 1
+        if ref_channel >= 0:
+            self.ref_channel = ref_channel
 
         self.enc = STFTEncoder(n_fft, n_fft, stride, window=window)
         self.dec = STFTDecoder(n_fft, n_fft, stride, window=window)
