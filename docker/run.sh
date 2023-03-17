@@ -108,7 +108,7 @@ fi
 if [ ${is_root} = false ]; then
     # Build a container with the user account
     container_tag="${from_tag}-user-${HOME##*/}"
-    docker_image=$( docker images -q espnet/espnet:${container_tag} ) 
+    docker_image=$( docker images -q espnet/espnet:${container_tag} )
     if ! [[ -n ${docker_image}  ]]; then
         echo "Building docker image..."
         build_args="--build-arg FROM_TAG=${from_tag}"
@@ -116,8 +116,8 @@ if [ ${is_root} = false ]; then
         build_args="${build_args} --build-arg THIS_UID=${UID}"
         build_args="${build_args} --build-arg EXTRA_LIBS=${EXTRAS}"
 
-        echo "Now running docker build ${build_args} -f espnet.dockerfile -t espnet/espnet:${container_tag} ."
-        (docker build ${build_args} -f espnet.dockerfile -t  espnet/espnet:${container_tag} .) || exit 1
+        echo "Now running docker build ${build_args} -f prebuilt/Dockerfile -t espnet/espnet:${container_tag} ."
+        (docker build ${build_args} -f prebuilt/Dockerfile -t  espnet/espnet:${container_tag} .) || exit 1
     fi
 else
     container_tag=${from_tag}
@@ -144,14 +144,21 @@ cd ..
 
 vols="-v ${PWD}/egs:/espnet/egs
       -v ${PWD}/espnet:/espnet/espnet
-      -v ${PWD}/test:/espnet/test 
+      -v ${PWD}/test:/espnet/test
       -v ${PWD}/utils:/espnet/utils"
 
 in_egs=egs
 if [ ${is_egs2} = true ]; then
     vols="${vols}   -v ${PWD}/egs2:/espnet/egs2
                     -v ${PWD}/espnet2:/espnet/espnet2
-                    -v /dev/shm:/dev/shm"
+                    -v /dev/shm:/dev/shm
+                    -v /home/ymasuyama/espnet/datasets:/espnet/datasets
+                    -v ${PWD}/utils:/espnet/utils
+                    -v ${PWD}/tools:/espnet/tools
+                    -v ${PWD}/../kaldi:/kaldi
+                    -v /home/ymasuyama/cmu-s3prl-ss/s3prl:/s3prl
+                    -v /home/ymasuyama:/home/ymasuyama
+                    -v ${PWD}/../espnet-20221126:/espnet-20221126"
     in_egs=egs2
 fi
 
@@ -181,7 +188,7 @@ if [ ! -z "${docker_env}" ]; then
     docker_env=$(echo ${docker_env} | tr "," "\n")
     for i in ${docker_env[@]}
     do
-        this_env="-e $i ${this_env}" 
+        this_env="-e $i ${this_env}"
     done
 fi
 
