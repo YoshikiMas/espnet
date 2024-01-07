@@ -1281,6 +1281,10 @@ class AbsTask(ABC):
                     else "cpu",
                 )
 
+            # save pre-trained model
+            torch.save(model.state_dict(), '/home/ymasuyama/init_models/pretrained_espnet_tf_gridnet.pth')
+            logging.info("Finish saving the pretrained entire model")
+
             # 7. Build iterator factories
             if args.multiple_iterator:
                 train_iter_factory = cls.build_multiple_iter_factory(
