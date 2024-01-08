@@ -95,3 +95,12 @@ zcat ${WSJ1}/13-32.1/wsj1/doc/lng_modl/lm_train/np_data/{87,88,89}/*.z | \
 log "Create non linguistic symbols: ${nlsyms}"
 cut -f 2- data/wsj/train_si284/text | tr " " "\n" | sort | uniq | grep "<" > ${nlsyms}
 cat ${nlsyms}
+
+utils/combine_data.sh --extra_files "spk1.scp spk2.scp text_spk1 text_spk2" \
+    data/tr_mix_clean_multi_min_16k data/tr_mix_clean_anechoic_min_16k data/tr_mix_clean_reverb_min_16k
+utils/combine_data.sh --extra_files "spk1.scp spk2.scp text_spk1 text_spk2" \
+    data/tr_mix_both_multi_min_16k data/tr_mix_both_anechoic_min_16k data/tr_mix_both_reverb_min_16k
+utils/combine_data.sh --extra_files "spk1.scp spk2.scp text_spk1 text_spk2" \
+    data/cv_mix_clean_multi_min_16k data/cv_mix_clean_anechoic_min_16k data/cv_mix_clean_reverb_min_16k
+utils/combine_data.sh --extra_files "spk1.scp spk2.scp text_spk1 text_spk2" \
+    data/cv_mix_both_multi_min_16k data/cv_mix_both_anechoic_min_16k data/cv_mix_both_reverb_min_16k

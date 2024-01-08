@@ -75,10 +75,12 @@ for x in tr cv tt; do
       spk1_wav_dir=${rootdir}/s1_${cond}
       sed -e "s#${mixwav_dir}#${spk1_wav_dir}#g" ${data}/${ddir}/wav.scp \
         > ${data}/${ddir}/spk1.scp
+      sed -i 's/s1_reverb/s1_anechoic/' ${data}/${ddir}/spk1.scp
       if [[ "$mixtype" != "single" ]]; then
         spk2_wav_dir=${rootdir}/s2_${cond}
         sed -e "s#${mixwav_dir}#${spk2_wav_dir}#g" ${data}/${ddir}/wav.scp \
           > ${data}/${ddir}/spk2.scp
+        sed -i 's/s2_reverb/s2_anechoic/' ${data}/${ddir}/spk2.scp
       fi
 
       if [[ "$cond" = "reverb" ]]; then

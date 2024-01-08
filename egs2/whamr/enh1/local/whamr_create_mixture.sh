@@ -56,7 +56,6 @@ tar -xzf ${wdir}/whamr_scripts.tar.gz -C ${dir}
 # If you want to generate both min and max versions with 8k and 16k data,
 #  remove lines 59 and 60.
 sed -i -e "s#MONO = True#MONO = ${mono}#" \
-       -e "s#DATA_LEN = \['max', 'min'\]#DATA_LEN = ['${min_or_max}']#" \
        -e "s#SAMPLE_RATES = \['16k', '8k'\]#SAMPLE_RATES = ['${sample_rate}']#" \
        ${dir}/whamr_scripts/create_wham_from_scratch.py
 
