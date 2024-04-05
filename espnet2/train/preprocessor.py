@@ -154,9 +154,13 @@ class CommonPreprocessor(AbsPreprocessor):
         noise_apply_prob: float = 1.0,
         noise_db_range: str = "3_10",
         short_noise_thres: float = 0.5,
+        num_spk: int = 1,
+        force_single_channel: bool = False,
+        channel_reordering: bool = False,
         aux_task_names: Collection[str] = None,
         speech_volume_normalize: float = None,
         speech_name: str = "speech",
+        speech_ref_name_prefix: str = "speech_ref",
         text_name: str = "text",
         fs: int = 0,
         nonsplit_symbol: Iterable[str] = None,
@@ -170,6 +174,7 @@ class CommonPreprocessor(AbsPreprocessor):
         super().__init__(train)
         self.train = train
         self.speech_name = speech_name
+        self.speech_ref_name_prefix = speech_ref_name_prefix
         self.text_name = text_name
         self.speech_volume_normalize = speech_volume_normalize
         self.rir_apply_prob = rir_apply_prob
@@ -178,6 +183,9 @@ class CommonPreprocessor(AbsPreprocessor):
         self.aux_task_names = aux_task_names
         self.use_lang_prompt = use_lang_prompt
         self.use_nlp_prompt = use_nlp_prompt
+        self.num_spk = num_spk
+        self.force_single_channel = force_single_channel
+        self.channel_reordering = channel_reordering
 
         if token_type is not None:
             if token_list is None:
@@ -373,6 +381,7 @@ class CommonPreprocessor(AbsPreprocessor):
         self, data: Dict[str, Union[str, np.ndarray]]
     ) -> Dict[str, Union[str, np.ndarray]]:
         assert check_argument_types()
+        num_spk = self.num_spk
         if self.speech_name in data:
             if self.train and (self.rirs is not None or self.noises is not None):
                 speech = data[self.speech_name]
@@ -414,12 +423,39 @@ class CommonPreprocessor(AbsPreprocessor):
                         data[self.speech_name], self.fs
                     )
 
+            if self.force_single_channel:
+                self._apply_to_all_signals(
+                    data, lambda x: x if x.ndim == 1 else x[:, 0], num_spk
+                )
+
             if self.speech_volume_normalize is not None:
                 speech = data[self.speech_name]
                 ma = np.max(np.abs(speech))
+
+            speech = data[self.speech_name]
+            if speech.ndim > 1 and self.channel_reordering and self.train:
+                num_ch = speech_.shape[-1]
+                chs = np.random.permutation(num_ch).tolist()
+                data[self.speech_name] = speech[..., chs]
+                for i in range(num_spk):
+                    k = self.speech_ref_name_prefix + str(i + 1)
+                    if self.train:
+                        assert k in data, (data.keys(), k)
+                    if k in data and data[k].ndim > 1:
+                        assert data[k].shape == speech.shape
+                        data[k] = data[k][..., chs]
+
                 data[self.speech_name] = speech * self.speech_volume_normalize / ma
         assert check_return_type(data)
         return data
+
+    def _apply_to_all_signals(self, data_dict, func, num_spk):
+        data_dict[self.speech_name] = func(data_dict[self.speech_name])
+
+        for spk in range(num_spk):
+            speech_ref_name = self.speech_ref_name_prefix + str(spk + 1)
+            if self.train or speech_ref_name in data_dict:
+                data_dict[speech_ref_name] = func(data_dict[speech_ref_name])
 
     def _text_process(
         self, data: Dict[str, Union[str, np.ndarray]]
@@ -519,6 +555,9 @@ class SLUPreprocessor(CommonPreprocessor):
         noise_apply_prob: float = 1.0,
         noise_db_range: str = "3_10",
         short_noise_thres: float = 0.5,
+        num_spk: int = 1,
+        force_single_channel: bool = False,
+        channel_reordering: bool = False,
         speech_volume_normalize: float = None,
         speech_name: str = "speech",
         text_name: str = "text",
@@ -544,6 +583,9 @@ class SLUPreprocessor(CommonPreprocessor):
             noise_apply_prob=noise_apply_prob,
             noise_db_range=noise_db_range,
             short_noise_thres=short_noise_thres,
+            num_spk=num_spk,
+            force_single_channel=force_single_channel,
+            channel_reordering=channel_reordering,
             speech_volume_normalize=speech_volume_normalize,
             speech_name=speech_name,
             text_name=text_name,

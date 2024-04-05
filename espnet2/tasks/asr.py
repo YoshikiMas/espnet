@@ -396,6 +396,25 @@ class ASRTask(AbsTask):
             default=[],
             help="Auxillary tasks to train on using CTC loss. ",
         )
+        group.add_argument(
+            "--num_spk",
+            type=int,
+            default=1,
+            help="Number of speakers in the input signal.",
+        )
+        group.add_argument(
+            "--force_single_channel",
+            type=str2bool,
+            default=False,
+            help="Whether to force all data to be single-channel.",
+        )
+        group.add_argument(
+            "--channel_reordering",
+            type=str2bool,
+            default=False,
+            help="Whether to randomly reorder the channels of the "
+            "multi-channel signals.",
+        )
 
         for class_choices in cls.class_choices_list:
             # Append --<name> and --<name>_conf.
@@ -454,6 +473,15 @@ class ASRTask(AbsTask):
                 speech_volume_normalize=(
                     args.speech_volume_normalize if hasattr(args, "rir_scp") else None
                 ),
+                num_spk=(
+                    args.num_spk if hasattr(args, "num_spk") else 1
+                ),
+                force_single_channel=(
+                    args.force_single_channel if hasattr(args, "force_single_channel") else False
+                ),               
+                channel_reordering=(
+                    args.channel_reordering if hasattr(args, "channel_reordering") else False
+                ),   
                 aux_task_names=(
                     args.aux_ctc_tasks if hasattr(args, "aux_ctc_tasks") else None
                 ),

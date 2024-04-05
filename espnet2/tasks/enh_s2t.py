@@ -424,6 +424,25 @@ class EnhS2TTask(AbsTask):
             type=str,
             help="Specify the text_name attribute used in the preprocessor",
         )
+        group.add_argument(
+            "--num_spk",
+            type=int,
+            default=1,
+            help="Number of speakers in the input signal.",
+        )
+        group.add_argument(
+            "--force_single_channel",
+            type=str2bool,
+            default=False,
+            help="Whether to force all data to be single-channel.",
+        )
+        group.add_argument(
+            "--channel_reordering",
+            type=str2bool,
+            default=False,
+            help="Whether to randomly reorder the channels of the "
+            "multi-channel signals.",
+        )
 
         for class_choices in cls.class_choices_list:
             # Append --<name> and --<name>_conf.
@@ -482,6 +501,9 @@ class EnhS2TTask(AbsTask):
                     text_name=getattr(args, "text_name", ["text"]),
                     text_cleaner=args.cleaner,
                     g2p_type=args.g2p,
+                    num_spk=args.num_spk,
+                    force_single_channel=args.force_single_channel,
+                    channel_reordering=args.channel_reordering,
                     **getattr(args, "preprocessor_conf", {}),
                 )
         else:
