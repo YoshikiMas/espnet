@@ -422,16 +422,6 @@ class CommonPreprocessor(AbsPreprocessor):
                     data[self.speech_name] = self.data_aug(
                         data[self.speech_name], self.fs
                     )
-
-            if self.force_single_channel:
-                self._apply_to_all_signals(
-                    data, lambda x: x if x.ndim == 1 else x[:, 0], num_spk
-                )
-
-            if self.speech_volume_normalize is not None:
-                speech = data[self.speech_name]
-                ma = np.max(np.abs(speech))
-
             speech = data[self.speech_name]
             if speech.ndim > 1 and self.channel_reordering and self.train:
                 num_ch = speech_.shape[-1]
@@ -446,6 +436,16 @@ class CommonPreprocessor(AbsPreprocessor):
                         data[k] = data[k][..., chs]
 
                 data[self.speech_name] = speech * self.speech_volume_normalize / ma
+
+            if self.force_single_channel:
+                self._apply_to_all_signals(
+                    data, lambda x: x if x.ndim == 1 else x[:, 0], num_spk
+                )
+
+            if self.speech_volume_normalize is not None:
+                speech = data[self.speech_name]
+                ma = np.max(np.abs(speech))
+
         assert check_return_type(data)
         return data
 
@@ -1456,6 +1456,21 @@ class EnhPreprocessor(CommonPreprocessor):
 
             self._apply_to_all_signals(data, lambda x: x.squeeze(), num_spk)
 
+        speech_mix = data[self.speech_name]
+        # Reorder channels of the multi-channel signals
+        if speech_mix.ndim > 1 and self.channel_reordering and self.train:
+            num_ch = speech_mix.shape[-1]
+            # chs = np.random.choice(range(num_ch), size=num_ch, replace=False).tolist()
+            chs = np.random.permutation(num_ch).tolist()
+            data[self.speech_name] = speech_mix[..., chs]
+            for i in range(num_spk):
+                k = self.speech_ref_name_prefix + str(i + 1)
+                if self.train:
+                    assert k in data, (data.keys(), k)
+                if k in data and data[k].ndim > 1:
+                    assert data[k].shape == speech_mix.shape
+                    data[k] = data[k][..., chs]
+
         if self.force_single_channel:
             self._apply_to_all_signals(
                 data, lambda x: x if x.ndim == 1 else x[:, 0], num_spk
@@ -1478,21 +1493,6 @@ class EnhPreprocessor(CommonPreprocessor):
                 category = f"{nch}ch_" + category
             assert category in self.categories, category
             data["utt2category"] = np.array([self.categories[category]])
-
-        speech_mix = data[self.speech_name]
-        # Reorder channels of the multi-channel signals
-        if speech_mix.ndim > 1 and self.channel_reordering and self.train:
-            num_ch = speech_mix.shape[-1]
-            # chs = np.random.choice(range(num_ch), size=num_ch, replace=False).tolist()
-            chs = np.random.permutation(num_ch).tolist()
-            data[self.speech_name] = speech_mix[..., chs]
-            for i in range(num_spk):
-                k = self.speech_ref_name_prefix + str(i + 1)
-                if self.train:
-                    assert k in data, (data.keys(), k)
-                if k in data and data[k].ndim > 1:
-                    assert data[k].shape == speech_mix.shape
-                    data[k] = data[k][..., chs]
 
         assert check_return_type(data)
         return data
