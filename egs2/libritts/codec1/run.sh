@@ -20,7 +20,8 @@ train_set=train-clean-460
 valid_set=dev-clean
 test_sets="test-clean"
 
-train_config=conf/train_soundstream4.yaml
+
+train_config=conf/train_dac.yaml
 inference_config=conf/decode.yaml
 score_config=conf/score_24k.yaml
 

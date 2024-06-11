@@ -78,7 +78,7 @@ install_torch(){
                 conda install -y "pytorch=${torch_version}" "torchaudio=$1" cpuonly -c pytorch
             else
                 log conda install -y "pytorch=${torch_version}" "torchaudio=$1" "pytorch-cuda=${cuda_version}" -c pytorch -c nvidia
-                conda install -y "pytorch=${torch_version}" "torchaudio=$1" "pytorch-cuda=${cuda_version}" -c pytorch -c nvidia
+                conda install -y "pytorch=${torch_version}" "torchaudio=$1" "pytorch-cuda=${cuda_version}" -c pytorch -c nvidia  --solver=classic
             fi
         else
             if [ -z "${cuda_version}" ]; then
