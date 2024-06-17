@@ -36,8 +36,8 @@ encoder_conf:
     sample_fs: 8000
     device: "cuda:0"
     dump_audio: True
-    checkpoint_path: "/home/jiaqi006/code/new_espnet/soundstream_model/16khz_soundstream/train.total_count.best.pth"
-    config_path: "/home/jiaqi006/code/new_espnet/soundstream_model/16khz_soundstream/config.yaml"
+    checkpoint_path: "/ocean/projects/cis210027p/masuyama/espnet-codec/pretrained-codec/16khz_soundstream/train.total_count.best.pth"
+    config_path: "/ocean/projects/cis210027p/masuyama/espnet-codec/pretrained-codec/16khz_soundstream/config.yaml"
 decoder: codec
 decoder_conf:
     channel: 512
@@ -46,11 +46,11 @@ decoder_conf:
     sample_fs: 8000
     device: "cuda:0"
     dump_audio: True
-    checkpoint_path: "/home/jiaqi006/code/new_espnet/soundstream_model/16khz_soundstream/train.total_count.best.pth"
-    config_path: "/home/jiaqi006/code/new_espnet/soundstream_model/16khz_soundstream/config.yaml"
+    checkpoint_path: "/ocean/projects/cis210027p/masuyama/espnet-codec/pretrained-codec/16khz_soundstream/train.total_count.best.pth"
+    config_path: "/ocean/projects/cis210027p/masuyama/espnet-codec/pretrained-codec/16khz_soundstream/config.yaml"
 separator: codec
 separator_conf:
-    # input_dim: 512 #not needed because enh.py infers this.
     internal_dim: 512
     num_spk: 2
-    predict_noise: True
+    trf_num_layers: 8
+    predict_noise: False

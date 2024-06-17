@@ -26,6 +26,8 @@ inference_config=conf/decode.yaml
 score_config=conf/score_24k.yaml
 
 ./codec.sh \
+    --stage 5 \
+    --stop_stage 7 \
     --local_data_opts "--trim_all_silence false" \
     --fs ${fs} \
     --train_config "${train_config}" \

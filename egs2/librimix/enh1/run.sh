@@ -5,7 +5,7 @@ set -e
 set -u
 set -o pipefail
 
-sample_rate=8k
+sample_rate=16k
 min_or_max=min  # "min" or "max". This is to determine how the mixtures are generated in local/data.sh.
 
 
@@ -14,7 +14,9 @@ valid_set="dev"
 test_sets="test "
 
 ./enh.sh \
-    --use_noise_ref true \
+    --stage 6 \
+    --stop_stage 6 \
+    --use_noise_ref false \
     --train_set "${train_set}" \
     --valid_set "${valid_set}" \
     --test_sets "${test_sets}" \
@@ -22,6 +24,7 @@ test_sets="test "
     --audio_format wav \
     --local_data_opts "--sample_rate ${sample_rate} --min_or_max ${min_or_max}" \
     --lang en \
-    --ngpu 4 \
-    --enh_config ./conf/train.yaml \
+    --ngpu 1 \
+    --enh_config ./conf/tuning/train_enh_codecformer.yaml \
+    --nj 1 \
     "$@"
