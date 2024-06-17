@@ -1,0 +1,65 @@
+optim: adam
+init: xavier_uniform
+max_epoch: 1
+batch_type: folded
+batch_size: 8
+iterator_type: chunk
+chunk_length: 24000
+num_workers: 4
+
+freeze_param: [
+    "encoder",
+    "decoder",
+]
+init_param: [
+    "/ocean/projects/cis210027p/masuyama/espnet-codec/pretrained-codec/16khz_soundstream/train.total_count.best.pth:codec.generator.encoder:encoder.codec_encoder",
+    "/ocean/projects/cis210027p/masuyama/espnet-codec/pretrained-codec/16khz_soundstream/train.total_count.best.pth:codec.generator.decoder:decoder.codec_decoder",
+]
+
+optim_conf:
+    lr: 0.0003
+    weight_decay: 0
+patience: 5
+val_scheduler_criterion:
+- valid
+- loss
+best_model_criterion:
+-   - valid
+    - si_snr
+    - max
+-   - valid
+    - loss
+    - min
+keep_nbest_models: 1
+scheduler: reducelronplateau
+scheduler_conf:
+    mode: min
+    factor: 0.5
+    patience: 1
+
+encoder: codec
+encoder_conf:
+    sample_rate: 16000
+    hidden_dim: 512
+    encdec_n_residual_layers: 3
+decoder: codec
+decoder_conf:
+    sample_rate: 16000
+    hidden_dim: 512
+    encdec_n_residual_layers: 3
+separator: codec
+separator_conf:
+    internal_dim: 512
+    num_spk: 2
+    trf_num_layers: 8
+    predict_noise: False
+
+criterions:
+  # The first criterion
+  - name: si_snr
+    conf:
+      eps: 1.0e-7
+    wrapper: pit
+    wrapper_conf:
+      weight: 1.0
+      independent_perm: True
