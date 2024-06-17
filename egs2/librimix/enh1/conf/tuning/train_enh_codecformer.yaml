@@ -33,7 +33,7 @@ encoder_conf:
     channel: 512
     codec_choice: "ESPnet"
     codec_fs: 16000 #must match the codec
-    sample_fs: 8000
+    sample_fs: 16000
     device: "cuda:0"
     dump_audio: True
     checkpoint_path: "/ocean/projects/cis210027p/masuyama/espnet-codec/pretrained-codec/16khz_soundstream/train.total_count.best.pth"
@@ -43,7 +43,7 @@ decoder_conf:
     channel: 512
     codec_choice: "ESPnet"
     codec_fs: 16000 #must match the codec
-    sample_fs: 8000
+    sample_fs: 16000
     device: "cuda:0"
     dump_audio: True
     checkpoint_path: "/ocean/projects/cis210027p/masuyama/espnet-codec/pretrained-codec/16khz_soundstream/train.total_count.best.pth"
