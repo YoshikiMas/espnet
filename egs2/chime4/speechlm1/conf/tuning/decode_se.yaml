@@ -1,0 +1,11 @@
+search_algo: greedy_search
+# search_algo: teacher_force
+# top_k: 20
+# maxlenratio: 1.0
+# minlenratio: 1.0
+# sampling_temperature: 1.5
+
+codec_conf:
+    codec_choice: ESPnet
+    hf_model_tag: espnet/owsmdata_soundstream_16k_200epoch
+    codec_fs: 16000
