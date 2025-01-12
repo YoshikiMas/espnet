@@ -3,7 +3,7 @@
 frontend: patch     # embedding + positional encoding
 frontend_conf:
     embed_dim: 512
-    patch_size: 8
+    token_per_frame: 8
     positional_dropout_rate: 0.1
 
 specaug: specaug
